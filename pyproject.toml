@@ -28,6 +28,7 @@ dependencies = [
     "beautifulsoup4 >=4.12.3",
     "rapidfuzz",
     "espn-api-orm",
+    "scikit-learn",
 ]
 
 [project.optional-dependencies]
