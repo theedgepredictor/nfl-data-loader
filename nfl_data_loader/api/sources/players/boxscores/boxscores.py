@@ -1,3 +1,5 @@
+import pandas as pd
+
 from nfl_data_loader.schemas.players.position import POSITION_MAPPER, HIGH_POSITION_MAPPER
 from nfl_data_loader.utils.formatters.reformat_team_name import team_id_repl
 

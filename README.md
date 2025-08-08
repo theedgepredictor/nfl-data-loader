@@ -4,20 +4,24 @@
 **nfl-data-loader** is a robust Python package for accessing, merging, and transforming NFL sports data from multiple sources in an object-oriented, pipeline-friendly way. It provides a unified API for teams, players, events, and venues, with rich schema documentation and ready-to-use data loaders, transformers, and formatters.
 
 ### TheEdgePredictor Services
+
+
+
 Upstream
-- espn-api-orm
-    - team-data-pump
-    - venue-data-pump
-    - event-data-pump
-        - elo-rating
-    - odds-data-pump 
-    - fantasy-data-pump
-- nfl-madden-data
+- espn-api-orm (PyPi Package)
+    - [![Team Data trigger](https://github.com/theedgepredictor/team-data-pump/actions/workflows/team_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/team-data-pump/actions/workflows/team_data_trigger.yaml)
+    - [![Venue Data trigger](https://github.com/theedgepredictor/venue-data-pump/actions/workflows/venue_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/venue-data-pump/actions/workflows/venue_data_trigger.yaml)
+    - [![Event Data trigger](https://github.com/theedgepredictor/event-data-pump/actions/workflows/event_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/event-data-pump/actions/workflows/event_data_trigger.yaml)
+        
+    - odds-data-pump (TBD) 
+    - [![Fantasy Data trigger](https://github.com/theedgepredictor/fantasy-data-pump/actions/workflows/fantasy_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/fantasy-data-pump/actions/workflows/fantasy_data_trigger.yaml)
+- nfl-madden-data (Manual Yearly Trigger)
+- [![ELO-Rating Data trigger](https://github.com/theedgepredictor/elo-rating/actions/workflows/elo_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/elo-rating/actions/workflows/elo_data_trigger.yaml)
 
 Downstream
-- nfl-feature-store
-- nfl-model-store
-- nfl-madden-data
+- [![Feature Store Data trigger](https://github.com/theedgepredictor/nfl-feature-store/actions/workflows/feature_store_data_trigger.yaml/badge.svg)](https://github.com/theedgepredictor/nfl-feature-store/actions/workflows/feature_store_data_trigger.yaml)
+- nfl-model-store (TBD)
+- nfl-madden-data (Manual Yearly Trigger)
 
 
 ## 🚀 Features

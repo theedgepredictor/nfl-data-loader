@@ -1,9 +1,10 @@
 import datetime
 import pandas as pd
-from src.extracts.elo import get_qb_elo
-from src.extracts.games import get_schedules
-from src.transforms.targets import event_targets
-from src.transforms.vegas_lines import make_cover_feature
+
+from nfl_data_loader.api.sources.events.elo.elo import get_qb_elo
+from nfl_data_loader.api.sources.events.games.games import get_schedules
+from nfl_data_loader.workflows.transforms.events.targets import event_targets
+from nfl_data_loader.workflows.transforms.events.vegas_lines import make_cover_feature
 
 
 class GameComponent:

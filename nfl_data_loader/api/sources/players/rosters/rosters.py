@@ -6,6 +6,7 @@ from nfl_data_loader.api.sources.players.general.players import collect_players
 from nfl_data_loader.schemas.players.position import POSITION_MAPPER, HIGH_POSITION_MAPPER
 from nfl_data_loader.utils.formatters.general import df_rename_fold
 from nfl_data_loader.utils.formatters.reformat_team_name import team_id_repl
+from nfl_data_loader.utils.utils import find_year_for_season
 
 
 def _fill_pre_2002_roster(year):
@@ -37,7 +38,7 @@ def collect_roster(year):
         else:
             player_nfld_df = pd.read_parquet(f'https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_{year}.parquet')
     except Exception as e:
-        if year < 2024:
+        if year < find_year_for_season():
             return pd.DataFrame()
         print(f'Cant get latest rosters for {year}...using latest player pull as week 1 data')
         player_nfld_df = collect_players()[['player_id', 'birth_date','position', 'latest_team','status_abbr', 'status','years_of_experience','jersey_number']]

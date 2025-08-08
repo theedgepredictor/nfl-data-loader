@@ -3,10 +3,12 @@ import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 
+from nfl_data_loader.api.sources.players.adv.madden.madden import get_madden_ratings
 from nfl_data_loader.api.sources.players.boxscores.boxscores import collect_weekly_espn_player_stats
 from nfl_data_loader.api.sources.players.general.combine import collect_combine
 from nfl_data_loader.api.sources.players.general.players import collect_players
 from nfl_data_loader.api.sources.players.rosters.rosters import collect_roster
+from nfl_data_loader.schemas.players.madden import MADDEN_ATTRIBUTE_MAP
 from nfl_data_loader.workflows.transforms.general.averages import dynamic_window_rolling_average
 from nfl_data_loader.workflows.transforms.players.player_groups.qbs import make_qb_career
 
@@ -162,13 +164,6 @@ def apply_rookie_av(df):
 
 ## Preseason Player
 ### Has Preseason Player Data Ratings
-def get_approximate_value(param):
-    pass
-
-
-def get_madden_ratings(season):
-    pass
-
 
 def get_preseason_players(season):
     """
@@ -177,57 +172,32 @@ def get_preseason_players(season):
     :return:
     """
     df = collect_roster(season)
+    if df[df.week == 1].shape[0] == 0:
+        # For nflverse current season during preseason
+        df['week'] = 1
     df = df[df.week == 1].copy()
-    df = pd.merge(df, get_static_players(), on='player_id', how='left')
+    static = get_static_players()[['player_id', 'birth_date', 'height',
+       'weight', 'rookie_season', 'draft_year', 'draft_round', 'draft_pick', 'forty', 'bench', 'vertical', 'broad_jump', 'cone', 'shuttle']]
+    df = pd.merge(df, static, on='player_id', how='left')
     df['is_rookie'] = (df['rookie_season'] == season) & (df.years_exp == 0)
-
-    ### AV Extractor (Previous Season)
-    av_df = get_approximate_value(season - 1)[[
-        'player_id',
-        'approximate_value'
-    ]].rename(columns={'player_id': 'pfr_id', 'approximate_value': 'last_season_av'})
-    df = pd.merge(df, av_df, on='pfr_id', how='left')
 
     processed_madden_df = pd.concat([
         get_madden_ratings(season),
         get_madden_ratings(season-1),
-    ]).drop_duplicates(subset=['player_id'], keep=('first' if season != 2002 else 'last'))
+    ]).drop_duplicates(subset=['player_id'], keep=('first' if season != 2001 else 'last'))
 
     processed_madden_df['season'] = season
-    df = pd.merge(df, processed_madden_df.drop(columns=['position_group']), on=['player_id','season'], how='left')
+    df = pd.merge(df, processed_madden_df.drop(columns=['high_pos_group','position_group','position','team']), on=['player_id','season'], how='left')
 
-    rookie_approx_value_df = df[df['is_rookie']==True].copy()
-    rookie_approx_value_df.draft_round = rookie_approx_value_df.draft_round.fillna(8)
-    rookie_approx_value_df.draft_pick = rookie_approx_value_df.draft_pick.fillna(rookie_approx_value_df.draft_pick.max() + 1)
-    rookie_approx_value_df = rookie_approx_value_df.apply(apply_rookie_av, axis=1)
-
-    df = df[df['is_rookie']==False].copy()
-    df = pd.concat([df, rookie_approx_value_df], ignore_index=True)
-
-    df = df.drop_duplicates(subset=['player_id'], keep='first').drop(columns=[
-        'team',
-        'week',
-        'position',
-        'jersey_number',
-        'status_abbr',
-        'position_group',
-        'high_pos_group',
-    ])
     df = df[[
         'season',
         'player_id',
         'madden_id',
+        'high_pos_group',
+        'position_group',
+        'position',
         'years_exp',
-         'is_rookie', 'last_season_av',  'overallrating', 'agility',
-         'acceleration', 'speed', 'stamina', 'strength', 'toughness', 'injury',
-         'awareness', 'jumping', 'trucking', 'throwpower', 'throwaccuracyshort',
-         'throwaccuracymid', 'throwaccuracydeep', 'playaction', 'throwonrun',
-         'carrying', 'ballcarriervision', 'stiffarm', 'spinmove', 'jukemove',
-         'catching', 'shortrouterunning', 'midrouterunning', 'deeprouterunning',
-         'spectacularcatch', 'catchintraffic', 'release', 'runblocking',
-         'passblocking', 'impactblocking', 'mancoverage', 'zonecoverage',
-         'tackle', 'hitpower', 'press', 'pursuit', 'kickaccuracy', 'kickpower',
-         'return']]
+        'is_rookie', 'last_season_av']+list(MADDEN_ATTRIBUTE_MAP.keys())]
     return df
 
 def make_player_avg_group_features(data, group_features_dict, mode='season_avg'):
@@ -294,7 +264,7 @@ def impute_base_player_ratings(df):
             pos_group_features.append(f"season_total_{feature}")
             pos_group_features.append(f"form_{feature}")
         '''
-        allowed_impute_cols = general_features+MADDEN_FEATURES+pos_group_features
+        allowed_impute_cols = general_features+list(MADDEN_ATTRIBUTE_MAP.keys())+pos_group_features
         group_df = df[df['position_group']==pos_group].copy()
 
         impute_df = group_df[allowed_impute_cols + general_helper_features]
@@ -445,3 +415,5 @@ def make_player_stats(season, week = None, season_type=None, position_group='qua
     return df
 
 ### Has Last Season Player Stats (avgs)
+if __name__ == '__main__':
+    df = get_preseason_players(2025)
