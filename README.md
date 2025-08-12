@@ -92,3 +92,13 @@ Pull requests welcome! Please add/expand tests and update schema docs for new en
 ---
 
 For a full list of available endpoints, schemas, and data fields, see the `/schemas` and `/api` directories. For questions or issues, open a GitHub issue.
+
+## Publishing
+
+Auto publish available through GitHub Actions and Pypi
+
+Local publishing (include token in rc)
+
+1. ```python -m build```
+
+2. ```twine upload dist/*```

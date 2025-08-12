@@ -57,8 +57,15 @@ def collect_players():
 
     data = add_missing_draft_data(data)
 
+    ids = pd.read_csv("https://raw.githubusercontent.com/dynastyprocess/data/master/files/db_playerids.csv")
+    id_map_df = ids[((ids.espn_id.notnull())&(ids.gsis_id.notnull()))][['espn_id','gsis_id']].copy()
+    id_map_df['espn_id'] = id_map_df['espn_id'].astype(int).astype(str)
+    gsis_to_espn_filler = dict(zip(id_map_df.gsis_id,id_map_df.espn_id))
     data['filled_espn_id'] = data.player_id
-    data['filled_espn_id'] = data['filled_espn_id'].map(ESPN_ID_MAPPER)
+    data['filled_espn_id'] = data['filled_espn_id'].map({**ESPN_ID_MAPPER, **gsis_to_espn_filler})
     data['espn_id'] = data['espn_id'].fillna(data['filled_espn_id'])
     data = data.drop(columns=['filled_espn_id'])
     return data
+
+if __name__ == '__main__':
+    collect_players()

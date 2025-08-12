@@ -269,7 +269,7 @@ def stat_collection(year, season_type="REG", mode='team'):
     df['yards_per_rush_attempt'] = df['rushing_yards'] / df['carries']
     df['touchdown_per_play'] = df['total_touchdowns'] / df['total_plays']
     df['yards_per_play'] = df['total_yards'] / df['total_plays']
-    df['fantasy_point_per_play'] = df['fantasy_points'] / df['total_plays']
+    df['fantasy_point_per_play'] = df['fantasy_points_ppr'] / df['total_plays']
 
     df['air_yards_per_pass_attempt'] = df['receiving_air_yards'] / df['attempts']
     df['VALUE_ELO'] = _calculate_raw_passer_value(df)

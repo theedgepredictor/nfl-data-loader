@@ -163,7 +163,7 @@ class WeeklyPlayerStatComponent:
         cols = filters+attrs
 
         off_frame = self.db['player_stats'][['position_group']+cols]
-        off_frame = off_frame[off_frame.position_group=='quarterback'].copy()
+        #off_frame = off_frame[off_frame.position_group=='quarterback'].copy()
         #droppers = [i for i in df.columns if i not in cols]
 
         for mode in ['season_avg', 'season_total', 'form']:
@@ -173,11 +173,6 @@ class WeeklyPlayerStatComponent:
             else:
                 off_frame = pd.merge(off_frame, attrs_df, on=['player_id', 'season', 'week'])
 
-        ## Ranks (Scrapping ranks for now. Going to normalize features already)
-        '''
-        group_features_rank_dict = {f'season_avg_{i}': 'max' for i, val in list(group_features_dict.items())}
-        off_frame_ranks = calculate_ranks(off_frame[['position_group','player_id','season','week']+list(group_features_rank_dict.keys())].fillna(0).copy(), group_by_col=['position_group','season', 'week'], rank_cols_methods=group_features_rank_dict).drop(columns=['position_group'])
-        off_frame = pd.merge(off_frame, off_frame_ranks, on=['player_id', 'season', 'week'])'''
         return off_frame
 
 

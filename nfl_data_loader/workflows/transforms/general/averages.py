@@ -27,7 +27,7 @@ def dynamic_window_rolling_average(x, attr, mode='season_avg'):
         mode (str, optional): The mode of the rolling average. Default is 'season_avg'.
 
     Returns:
-        pd.Series: Series with the dynamic rolling EWMA for the attribute.
+        pd.Series: Series with the dynamic rolling for the attribute.
     """
     values = np.zeros(len(x))
     attr_shifted = f'{attr}_shifted'
@@ -49,9 +49,9 @@ def dynamic_window_rolling_average(x, attr, mode='season_avg'):
                 # Handle edge case for the first week or season start
                 values[i] = attr_data.rolling(min_periods=1, window=18 if row['season'] >= 2021 else 17).sum().values[-1]
         elif mode == 'form':
-            ### last 5 divided by career avg
-            values[i] = attr_data.rolling(min_periods=1, window=5).mean().values[-1] / attr_data.mean()
+            ### last 3 divided by career avg
+            values[i] = attr_data.rolling(min_periods=1, window=3).mean().values[-1]
         else:
-            values[i] = attr_data.rolling(min_periods=1, window=5).mean().values[-1]
+            values[i] = attr_data.rolling(min_periods=1, window=3).mean().values[-1]
 
     return pd.Series(values, index=x.index)
