@@ -1,3 +1,5 @@
+from functools import reduce
+
 import numpy as np
 import pandas as pd
 from sklearn.experimental import enable_iterative_imputer
@@ -9,7 +11,7 @@ from nfl_data_loader.api.sources.players.general.combine import collect_combine
 from nfl_data_loader.api.sources.players.general.players import collect_players
 from nfl_data_loader.api.sources.players.rosters.rosters import collect_roster
 from nfl_data_loader.schemas.players.madden import MADDEN_ATTRIBUTE_MAP
-from nfl_data_loader.workflows.transforms.general.averages import dynamic_window_rolling_average
+from nfl_data_loader.workflows.transforms.general.averages import dynamic_window_rolling_average, dynamic_window_rolling_average_fast, ensure_sorted_index, dynamic_window_all_attrs
 from nfl_data_loader.workflows.transforms.players.player_groups.qbs import make_qb_career
 
 MADDEN_FEATURES = [
@@ -200,38 +202,27 @@ def get_preseason_players(season):
         'is_rookie', 'last_season_av']+list(MADDEN_ATTRIBUTE_MAP.keys())]
     return df
 
-def make_player_avg_group_features(data, group_features_dict, mode='season_avg'):
+def make_player_avg_group_features_fast(data, group_features_dict, mode='season_avg'):
     """
-    Calculate dynamic window avg for multiple attributes (like epa, rushing_yards, etc.) for both offense and defense.
-
-    Parameters:
-        data (DataFrame): Play-by-play dataframe containing the relevant play data. (Filter data prior to calling this function)
-        group_features: List of attributes to calculate dynamic window avg
-
-    Returns:
-        DataFrame: Combined dataframe containing offensive and defensive avg values for each attribute.
+    data must contain ['player_id','season','week'] + attrs.
+    group_features_dict: {attr: agg_fn}
+    Returns a DataFrame indexed by ['player_id','season','week'] with mode-prefixed columns.
     """
+    # 1) Aggregate ONCE for all attrs
+    agg_map = group_features_dict  # e.g., {'completions':'sum', 'passing_yards':'sum', ...}
+    dfw = (data
+           .groupby(['player_id','season','week'], as_index=False)
+           .agg(agg_map))
+    dfw = ensure_sorted_index(dfw)
 
-    features = pd.DataFrame()
+    attrs = list(agg_map.keys())
 
-    for attr, agg_method in group_features_dict.items():
+    # 2) Compute the chosen mode across ALL attrs at once
+    out = dynamic_window_all_attrs(dfw, attrs, mode=mode)
+    out.index = dfw.index  # aligned
 
-        # Separate attribute values
-        offense = data.groupby(['player_id','season','week'], as_index=False).agg({attr: agg_method})
-
-        # Lag attribute one period back
-        offense[f'{attr}_shifted'] = offense.groupby('player_id')[attr].shift()
-
-        # Calculate dynamic window MA for the attribute
-        offense[f'{mode}_{attr}'] = offense.groupby('player_id').apply(dynamic_window_rolling_average, attr, mode).values
-        offense = offense[[f'{mode}_{attr}'] + ['player_id','season','week']]
-        # Collect features for this attribute
-        if features.shape[0] == 0:
-            features = offense
-        else:
-            features = pd.merge(features, offense, on=['player_id','season','week'])
-
-    return features.drop_duplicates(subset=['player_id','season','week'])
+    # If you prefer the old return shape (reset index):
+    return out.reset_index()
 
 def impute_base_player_ratings(df):
     general_features = [

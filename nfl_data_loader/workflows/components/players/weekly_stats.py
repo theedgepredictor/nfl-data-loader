@@ -2,8 +2,9 @@ import datetime
 
 import pandas as pd
 
+from nfl_data_loader.workflows.transforms.general.averages import ensure_sorted_index, _shift_group
 from nfl_data_loader.workflows.transforms.general.general import stat_collection
-from nfl_data_loader.workflows.transforms.players.player import make_player_avg_group_features
+from nfl_data_loader.workflows.transforms.players.player import make_player_avg_group_features_fast
 
 
 class WeeklyPlayerStatComponent:
@@ -74,20 +75,20 @@ class WeeklyPlayerStatComponent:
             'passing_2pt_conversions',
             'pacr',
             'dakota',
-            'avg_time_to_throw',
-            'avg_completed_air_yards',
-            'avg_intended_air_yards_passing',
-            'avg_air_yards_differential',
-            'aggressiveness',
-            'max_completed_air_distance',
-            'avg_air_yards_to_sticks',
+            #'avg_time_to_throw',
+            #'avg_completed_air_yards',
+            #'avg_intended_air_yards_passing',
+            #'avg_air_yards_differential',
+            #'aggressiveness',
+            #'max_completed_air_distance',
+            #'avg_air_yards_to_sticks',
             'passer_rating',
             'VALUE_ELO',
             'completion_percentage',
-            'expected_completion_percentage',
-            'completion_percentage_above_expectation',
-            'avg_air_distance',
-            'max_air_distance',
+            #'expected_completion_percentage',
+            #'completion_percentage_above_expectation',
+            #'avg_air_distance',
+            #'max_air_distance',
             'net_passing_yards',
             'yards_per_pass_attempt',
             'sack_rate',
@@ -104,14 +105,14 @@ class WeeklyPlayerStatComponent:
             'rushing_first_downs',
             'rushing_epa',
             'rushing_2pt_conversions',
-            'efficiency',
-            'percent_attempts_gte_eight_defenders',
-            'avg_time_to_los',
-            'avg_rush_yards',
-            'expected_rush_yards',
-            'rush_yards_over_expected',
-            'rush_yards_over_expected_per_att',
-            'rush_pct_over_expected',
+            #'efficiency',
+            #'percent_attempts_gte_eight_defenders',
+            #'avg_time_to_los',
+            #'avg_rush_yards',
+            #'expected_rush_yards',
+            #'rush_yards_over_expected',
+            #'rush_yards_over_expected_per_att',
+            #'rush_pct_over_expected',
             'yards_per_rush_attempt',
         ]
 
@@ -131,14 +132,14 @@ class WeeklyPlayerStatComponent:
             'target_share',
             'air_yards_share',
             'wopr',
-            'avg_cushion',
-            'avg_separation',
-            'avg_intended_air_yards_receiving',
-            'percent_share_of_intended_air_yards',
+            #'avg_cushion',
+            #'avg_separation',
+            #'avg_intended_air_yards_receiving',
+            #'percent_share_of_intended_air_yards',
             'catch_percentage',
-            'avg_yac',
-            'avg_expected_yac',
-            'avg_yac_above_expectation',
+            #'avg_yac',
+            #'avg_expected_yac',
+            #'avg_yac_above_expectation',
         ]
 
         general_stats = [
@@ -155,25 +156,35 @@ class WeeklyPlayerStatComponent:
             'total_first_downs',
             'touchdown_per_play',
             'yards_per_play',
-            'fantasy_point_per_play',
+            #'fantasy_point_per_play',
         ]
         attrs = passing_stats+rushing_stats+receiving_stats+general_stats
         #attrs = ['fantasy_points_ppr','VALUE_ELO','passing_epa','attempts','total_plays']
         group_features_dict = {i: 'sum' for i in attrs}
-        cols = filters+attrs
 
-        off_frame = self.db['player_stats'][['position_group']+cols]
-        #off_frame = off_frame[off_frame.position_group=='quarterback'].copy()
-        #droppers = [i for i in df.columns if i not in cols]
+        base = self.db['player_stats'][['position_group'] + filters + attrs] \
+            .sort_values(['player_id', 'season', 'week']).copy()
 
-        for mode in ['season_avg', 'season_total', 'form']:
-            attrs_df = make_player_avg_group_features(off_frame, group_features_dict=group_features_dict, mode=mode)
-            if off_frame.shape[0] == 0:
-                off_frame = attrs_df
+        # compute each mode once
+        mode_frames = []
+        for mode in ['season_avg', 'form', 'last']:
+            if mode != 'last':
+                feat = make_player_avg_group_features_fast(base, group_features_dict, mode=mode)
             else:
-                off_frame = pd.merge(off_frame, attrs_df, on=['player_id', 'season', 'week'])
+                # 'last' is just shifted; we can reuse the same wide agg and shift once
+                agg = (base.groupby(filters, as_index=False).agg(group_features_dict))
+                agg = ensure_sorted_index(agg)
+                shifted = _shift_group(agg, attrs).add_prefix('last_').reset_index()
+                feat = shifted
+            mode_frames.append(feat)
 
-        return off_frame
+        # join once
+        out = mode_frames[0]
+        for f in mode_frames[1:]:
+            out = out.merge(f, on=['player_id', 'season', 'week'], how='left')
+
+        # Merge back to your base if needed:
+        return base[['player_id', 'season', 'week','position_group']].merge(out, on=['player_id', 'season', 'week'], how='left')
 
 
 

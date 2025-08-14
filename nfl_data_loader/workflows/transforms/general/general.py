@@ -318,3 +318,4 @@ def make_avg_group_features(data, group_features_dict):
             features = pd.merge(features, avgs, on=['team', 'season', 'week'])
 
     return features.drop_duplicates(subset=['team', 'season', 'week'])
+
