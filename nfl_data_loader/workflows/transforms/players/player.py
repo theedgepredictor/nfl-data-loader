@@ -11,7 +11,7 @@ from nfl_data_loader.api.sources.players.general.combine import collect_combine
 from nfl_data_loader.api.sources.players.general.players import collect_players
 from nfl_data_loader.api.sources.players.rosters.rosters import collect_roster
 from nfl_data_loader.schemas.players.madden import MADDEN_ATTRIBUTE_MAP
-from nfl_data_loader.workflows.transforms.general.averages import dynamic_window_rolling_average, dynamic_window_rolling_average_fast, ensure_sorted_index, dynamic_window_all_attrs
+from nfl_data_loader.workflows.transforms.general.averages import ensure_sorted_index, dynamic_window_all_attrs
 from nfl_data_loader.workflows.transforms.players.player_groups.qbs import make_qb_career
 
 MADDEN_FEATURES = [

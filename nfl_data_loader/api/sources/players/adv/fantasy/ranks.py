@@ -95,6 +95,7 @@ def get_fantasypros_ecr(seasons):
     df = pd.concat([player_df, team_df], ignore_index=True)
     df = df[df.espn_id.notnull()].copy().drop(columns=['team', 'pos'])
     df['espn_id'] = df['espn_id'].astype(int)
-    if df.week.max() == 0:
-        df['week'] = 1
+
+    if df[df.season==df.season.max()].week.max() ==0:
+        df.loc[df.season==df.season.max(),'week'] = 1
     return df

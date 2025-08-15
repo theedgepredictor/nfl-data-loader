@@ -1,40 +1,22 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = [ "setuptools", "wheel",]
 build-backend = "setuptools.build_meta"
 
 [project]
-name='nfl-data-loader'
-authors = [
-    {name='TheEdgePredictor', email='theedgepredictor@gmail.com'},
-]
+name = "nfl-data-loader"
 description = "A Python interface for various NFL data sources"
 readme = "README.md"
 requires-python = ">= 3.8"
-keywords = ["data science", "sports", "NFL"]
-classifiers=[
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-version = '0.0.5'
-
-dependencies = [
-    "pydantic > 2.0.0",
-    "requests ==2.31.0",
-    "numpy >=1.26.4",
-    "pandas >=2.2.0",
-    "pyarrow",
-    "openpyxl >=3.1.5",
-    "beautifulsoup4 >=4.12.3",
-    "rapidfuzz",
-    "espn-api-orm",
-    "scikit-learn",
-]
+keywords = [ "data science", "sports", "NFL",]
+classifiers = [ "Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent",]
+version = "0.0.7"
+dependencies = [ "pydantic > 2.0.0", "requests ==2.31.0", "numpy >=1.26.4", "pandas >=2.2.0", "pyarrow", "openpyxl >=3.1.5", "beautifulsoup4 >=4.12.3", "rapidfuzz", "espn-api-orm", "scikit-learn",]
+[[project.authors]]
+name = "TheEdgePredictor"
+email = "theedgepredictor@gmail.com"
 
 [project.optional-dependencies]
-test = [
-    "pytest > 7.0.0",
-]
+test = [ "pytest > 7.0.0",]
 
 [project.urls]
 Repository = "https://github.com/theedgepredictor/nfl-data-loader"
