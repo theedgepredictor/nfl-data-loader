@@ -73,7 +73,7 @@ T_MERGENAME_TO_PLAYERID = {
     "Indianapolis Colts":      "00-IND16011",
 }
 
-def get_player_fantasy_projections(season, mode='weekly', group='OFF'):
+def get_player_fantasy_projections(season, mode='weekly', group='OFF', score_mode='HALF'):
     """
     Fetches fantasy projections for players based on position group and timeframe.
     """
@@ -87,6 +87,11 @@ def get_player_fantasy_projections(season, mode='weekly', group='OFF'):
         df = df.rename(columns={'player_id': 'espn_id'})
         df['player_id'] = df['espn_id'].map({**T_ESPN_TO_PLAYERID, **p_id_dict})
 
+        if score_mode == 'HALF':
+            df['projected_points'] = df['projected_points'] - df['projected_receiving_receptions'].fillna(0) * 0.5
+        elif score_mode == 'STANDARD':
+            df['projected_points'] = df['projected_points'] - df['projected_receiving_receptions'].fillna(0) * 1.0
+
         weekly_meta = [
             'season', 'week', 'player_id','espn_id', 'name', 'position', 'team',
             'percent_owned', 'percent_started', 'projected_points','PPR_draft_rank','STANDARD_draft_rank'
@@ -94,7 +99,7 @@ def get_player_fantasy_projections(season, mode='weekly', group='OFF'):
 
         season_meta = [
             'season', 'player_id','espn_id', 'name', 'position', 'team',
-            'percent_owned', 'percent_started',
+            'percent_owned', 'percent_started','PPR_draft_rank','STANDARD_draft_rank'
         ]
 
         offensive_cols = [
@@ -178,20 +183,20 @@ def get_player_fantasy_projections(season, mode='weekly', group='OFF'):
         # Only include stat columns that exist in the DataFrame
         stat_cols = [col for col in potential_stat_cols if col in df.columns]
 
-        meta_cols = season_meta if mode == 'season' else weekly_meta
+        meta_cols = season_meta+['projected_points'] if mode == 'season' else weekly_meta
         all_cols = meta_cols + stat_cols
         df = df[all_cols]
         df = df[df.position.isin(positions)].copy()
 
         if mode == 'season':
-            meta_df = df[meta_cols].drop_duplicates(['player_id'])
-            ### need to make these raw
-            meta_df['total_points'] = df.groupby('player_id')['points'].sum().reset_index(drop=True)
-            meta_df['projected_total_points'] = df.groupby('player_id')['projected_points'].sum().reset_index(drop=True)
-            meta_df['avg_points'] = df.groupby('player_id')['points'].mean().reset_index(drop=True)
-            meta_df['projected_avg_points'] = df.groupby('player_id')['projected_points'].mean().reset_index(drop=True)
-            stats_df = df[['player_id'] + stat_cols].groupby(['player_id']).sum()
-            df = pd.merge(meta_df, stats_df, on=['player_id'])
+            meta_df = df[meta_cols].drop_duplicates(subset=['espn_id'], keep='first').reset_index(drop=True)
+            meta_df = meta_df.merge(df.groupby('espn_id')['projected_points'].sum().reset_index().rename(columns={'projected_points': 'projected_total_points'}), how='left', on=['espn_id'])
+            meta_df = meta_df.merge(df.groupby('espn_id')['projected_points'].mean().reset_index().rename(columns={'projected_points': 'projected_avg_points'}), how='left', on=['espn_id'])
+            meta_df = meta_df.drop(columns=['projected_points'], errors='ignore')
+
+            stats_df = df[['espn_id'] + stat_cols].groupby(['espn_id']).sum()
+
+            df = pd.merge(meta_df, stats_df, on=['espn_id'])
         return df
     except Exception as e:
         print(f"Error fetching fantasy projections: {e}")

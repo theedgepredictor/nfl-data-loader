@@ -380,31 +380,6 @@ def adjust_preseason_ratings(df):
     return df
 
 
-def make_player_stats(season, week = None, season_type=None, position_group='quarterback'):
-    """
-    Mode can be
-    :param season:
-    :param week:
-    :param season_type:
-    :param position_group:
-    :return:
-    """
-    if position_group in ['d_field','d_line']:
-        group = 'def'
-    elif position_group == ['kick','special_teams']:
-        group = 'st'
-    else:
-        group = ''
-    df = collect_weekly_espn_player_stats(season, week=week, season_type=season_type,  group=group)
-
-    ## Add position specific extras, column selection and data transforms
-    if position_group == 'quarterback':
-        df = make_qb_career(df[df.position_group == position_group].copy())
-    else:
-        pass
-
-    return df
-
 ### Has Last Season Player Stats (avgs)
 if __name__ == '__main__':
     df = get_preseason_players(2025)

@@ -11,6 +11,7 @@ repl = {
     'STL': 'LAR', # St. Louis Rams became Los Angeles Rams
     'SDG': 'LAC', # San Diego Chargers abbreviation changed
     'WSH': 'WAS', # Washington Redskins abbreviation changed
+    'JAC': 'JAX', # Jacksonville
 }
 
 def team_id_repl(df):
